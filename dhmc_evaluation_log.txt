@@ -1,0 +1,281 @@
+
+============================================================
+SCENARIO 1: Clean Execution (Real LangGraph Graph)
+============================================================
+
+[Pregel] Starting real LangGraph loop...
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-clean-thread' | parent_checkpoint_id='None' | new_checkpoint_id='1f15b4ed-96b9-6ed4-bfff-7979e5517c23'
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-clean-thread' | parent_checkpoint_id='1f15b4ed-96b9-6ed4-bfff-7979e5517c23' | new_checkpoint_id='1f15b4ed-96ba-6c12-8000-bff08de94795'
+  [DHMC-WRAPPER] Sequential Sync: Waiting for put_writes of checkpoint=1f15b4ed-96b9-6ed4-bfff-7979e5517c23...
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, __start__' | thread=loan-clean-thread | checkpoint=1f15b4ed-96b9-6ed4-bfff-7979e5517c23 -> node=None
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, intent_parser' | thread=loan-clean-thread | checkpoint=1f15b4ed-96ba-6c12-8000-bff08de94795 -> node=intent_parser
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, credit_retrieval' | thread=loan-clean-thread | checkpoint=1f15b4ed-96bb-6db0-8001-56f42aba1809 -> node=credit_retrieval
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, income_verification' | thread=loan-clean-thread | checkpoint=1f15b4ed-96bc-676a-8002-f530f98895da -> node=income_verification
+  [ROUTER] Direct routing to synthesis
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, ofac_lookup' | thread=loan-clean-thread | checkpoint=1f15b4ed-96bd-62c8-8003-66faf5749651 -> node=ofac_lookup
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, synthesis' | thread=loan-clean-thread | checkpoint=1f15b4ed-96bd-6d2c-8004-fa8250eda41a -> node=synthesis
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-clean-thread' | parent_checkpoint_id='1f15b4ed-96ba-6c12-8000-bff08de94795' | new_checkpoint_id='1f15b4ed-96bb-6db0-8001-56f42aba1809'
+  [DHMC-WRAPPER] Found writes for node=intent_parser. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=intent_parser | module=M1 | step_type=StepType.LLM
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-clean-thread' | parent_checkpoint_id='1f15b4ed-96bb-6db0-8001-56f42aba1809' | new_checkpoint_id='1f15b4ed-96bc-676a-8002-f530f98895da'
+  [DHMC-WRAPPER] Found writes for node=credit_retrieval. Registering step sequentially.
+[DHMC] ✓ Module M1 closed | steps=1 | H(M)=17bdb396196761c9...
+  [DHMC-WRAPPER] Registering step: node=credit_retrieval | module=M2 | step_type=StepType.RAG
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-clean-thread' | parent_checkpoint_id='1f15b4ed-96bc-676a-8002-f530f98895da' | new_checkpoint_id='1f15b4ed-96bd-62c8-8003-66faf5749651'
+  [DHMC-WRAPPER] Found writes for node=income_verification. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=income_verification | module=M2 | step_type=StepType.TOOL
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-clean-thread' | parent_checkpoint_id='1f15b4ed-96bd-62c8-8003-66faf5749651' | new_checkpoint_id='1f15b4ed-96bd-6d2c-8004-fa8250eda41a'
+  [DHMC-WRAPPER] Found writes for node=ofac_lookup. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=ofac_lookup | module=M2 | step_type=StepType.TOOL
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-clean-thread' | parent_checkpoint_id='1f15b4ed-96bd-6d2c-8004-fa8250eda41a' | new_checkpoint_id='1f15b4ed-96be-64ca-8005-ecbb5737cbd7'
+  [DHMC-WRAPPER] Found writes for node=synthesis. Registering step sequentially.
+[DHMC] ✓ Module M2 closed | steps=3 | H(M)=2f18d996ca9564e6...
+  [DHMC-WRAPPER] Registering step: node=synthesis | module=M3 | step_type=StepType.LLM
+[DHMC] ✓ Module M3 closed | steps=1 | H(M)=bbe9b5e14d4521ab...
+[Pregel] LangGraph loop finished.
+
+============================================================
+DHMC FORENSIC AUDIT REPORT
+Session:  loan-clean-001
+Verdict:  CLEAN
+============================================================
+  [✓ PASS] Schema envelope conformance [M1]
+  [✓ PASS] Schema envelope conformance [M2]
+  [✓ PASS] Schema envelope conformance [M3]
+  [✓ PASS] Nonce uniqueness
+  [✓ PASS] Deviation record review
+  [✓ PASS] Leaf hash recomputation (all steps)
+  [✓ PASS] Monotonic counter ordering
+  [✓ PASS] Module chain linkage [M1]
+  [✓ PASS] Module chain linkage [M2]
+  [✓ PASS] Module chain linkage [M3]
+  [✓ PASS] CAS payload integrity
+============================================================
+
+
+============================================================
+SCENARIO 2: Context Hijack — Post-Execution CAS Tampering
+Attacker modifies credit document in CAS after clean execution
+============================================================
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-hijack-thread' | parent_checkpoint_id='None' | new_checkpoint_id='1f15b4ed-c68f-68ca-bfff-a5d8abe178d1'
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-hijack-thread' | parent_checkpoint_id='1f15b4ed-c68f-68ca-bfff-a5d8abe178d1' | new_checkpoint_id='1f15b4ed-c691-695e-8000-bb5636e790d1'
+  [DHMC-WRAPPER] Sequential Sync: Waiting for put_writes of checkpoint=1f15b4ed-c68f-68ca-bfff-a5d8abe178d1...
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, __start__' | thread=loan-hijack-thread | checkpoint=1f15b4ed-c68f-68ca-bfff-a5d8abe178d1 -> node=None
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, intent_parser' | thread=loan-hijack-thread | checkpoint=1f15b4ed-c691-695e-8000-bb5636e790d1 -> node=intent_parser
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, credit_retrieval' | thread=loan-hijack-thread | checkpoint=1f15b4ed-c693-66f0-8001-b5b4f9d8a09b -> node=credit_retrieval
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, income_verification' | thread=loan-hijack-thread | checkpoint=1f15b4ed-c694-6c8a-8002-3e613ab9d5a5 -> node=income_verification
+  [ROUTER] Risk signal detected or attack simulation active -> Routing to fraud_check
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, ofac_lookup' | thread=loan-hijack-thread | checkpoint=1f15b4ed-c696-61fc-8003-a5fab1603d55 -> node=ofac_lookup
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, synthesis' | thread=loan-hijack-thread | checkpoint=1f15b4ed-c698-6d12-8005-5c5d40fc5544 -> node=synthesis
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, fraud_check' | thread=loan-hijack-thread | checkpoint=1f15b4ed-c697-6994-8004-e18a825de7d6 -> node=fraud_check
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-hijack-thread' | parent_checkpoint_id='1f15b4ed-c691-695e-8000-bb5636e790d1' | new_checkpoint_id='1f15b4ed-c693-66f0-8001-b5b4f9d8a09b'
+  [DHMC-WRAPPER] Found writes for node=intent_parser. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=intent_parser | module=M1 | step_type=StepType.LLM
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-hijack-thread' | parent_checkpoint_id='1f15b4ed-c693-66f0-8001-b5b4f9d8a09b' | new_checkpoint_id='1f15b4ed-c694-6c8a-8002-3e613ab9d5a5'
+  [DHMC-WRAPPER] Found writes for node=credit_retrieval. Registering step sequentially.
+[DHMC] ✓ Module M1 closed | steps=1 | H(M)=cc5b3cd75a9f9bec...
+  [DHMC-WRAPPER] Registering step: node=credit_retrieval | module=M2 | step_type=StepType.RAG
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-hijack-thread' | parent_checkpoint_id='1f15b4ed-c694-6c8a-8002-3e613ab9d5a5' | new_checkpoint_id='1f15b4ed-c696-61fc-8003-a5fab1603d55'
+  [DHMC-WRAPPER] Found writes for node=income_verification. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=income_verification | module=M2 | step_type=StepType.TOOL
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-hijack-thread' | parent_checkpoint_id='1f15b4ed-c696-61fc-8003-a5fab1603d55' | new_checkpoint_id='1f15b4ed-c697-6994-8004-e18a825de7d6'
+  [DHMC-WRAPPER] Found writes for node=ofac_lookup. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=ofac_lookup | module=M2 | step_type=StepType.TOOL
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-hijack-thread' | parent_checkpoint_id='1f15b4ed-c697-6994-8004-e18a825de7d6' | new_checkpoint_id='1f15b4ed-c698-6d12-8005-5c5d40fc5544'
+  [DHMC-WRAPPER] Found writes for node=fraud_check. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=fraud_check | module=M2 | step_type=StepType.VALIDATION
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-hijack-thread' | parent_checkpoint_id='1f15b4ed-c698-6d12-8005-5c5d40fc5544' | new_checkpoint_id='1f15b4ed-c69a-61b2-8006-dafeb5a3c9a2'
+  [DHMC-WRAPPER] Found writes for node=synthesis. Registering step sequentially.
+[DHMC] ✓ Module M2 closed | steps=4 | H(M)=43065e5ca4d845e4...
+  [DHMC-WRAPPER] Registering step: node=synthesis | module=M3 | step_type=StepType.LLM
+[DHMC] ✓ Module M3 closed | steps=1 | H(M)=066a8aebf2b6bdee...
+
+[ATTACK] Attacker targets M2 step 0 output CAS entry
+[ATTACK] URI: cas://sha256:66faba0ad0f35aaa6ce86ea88327c1b5c8e2f7940d9b4a81bdeb719ad52fe24f
+  [ATTACK-SIM] CAS entry tampered: cas://sha256:66faba0ad0f35aaa6ce86ea88327c1b5c8e2f7940d9b4a8...
+
+============================================================
+DHMC FORENSIC AUDIT REPORT
+Session:  loan-attack-hijack-001
+Verdict:  TAMPERED
+Breach at: M2:step:0000:dfcc700b
+============================================================
+  [✓ PASS] Schema envelope conformance [M1]
+  [✓ PASS] Schema envelope conformance [M2]
+  [✓ PASS] Schema envelope conformance [M3]
+  [✓ PASS] Nonce uniqueness
+  [✓ PASS] Deviation record review
+  [✗ FAIL] Leaf hash recomputation [M2:step:0000:dfcc700]
+          Binding mismatch — payload tampered after execution
+          Evidence: {
+          "stored_binding": "1bd55a3b6c4c24aa881bedba7eca7689",
+          "recomputed_binding": "e42a6fa69d92b96fbfde758f2fdf7451",
+          "input_cas_uri": "cas://sha256:4835e9a582a8a1a58e31b995a92587b287bf1032eb0d34f87625d295a61c267b",
+          "output_cas_uri": "cas://sha256:66faba0ad0f35aaa6ce86ea88327c1b5c8e2f7940d9b4a81bdeb719ad52fe24f"
+}
+  [✓ PASS] Monotonic counter ordering
+  [✓ PASS] Module chain linkage [M1]
+  [✓ PASS] Module chain linkage [M2]
+  [✓ PASS] Module chain linkage [M3]
+  [✗ FAIL] CAS payload integrity
+          URI mismatch: stored=cas://sha256:66faba0ad0f35aaa6ce86ea88327c1b5c8e2f7940d9b4a81bdeb719ad52fe24f expected=cas://sha256:a3c695abfe8108f333d5ffd55ce34462eaa055f410132ea7146895a1d306fa20
+          Evidence: {
+          "stored_uri": "cas://sha256:66faba0ad0f35aaa6ce86ea88327c1b5c8e2f7940d9b4a81bdeb719ad52fe24f",
+          "recomputed_uri": "cas://sha256:a3c695abfe8108f333d5ffd55ce34462eaa055f410132ea7146895a1d306fa20"
+}
+============================================================
+
+
+[DFIR] Breach localized. Drilling down on: M2:step:0000:dfcc700b
+{
+  "forensic_finding": {
+    "step_id": "M2:step:0000:dfcc700b",
+    "module_id": "M2",
+    "step_type": "rag",
+    "timestamp": 1780052973.866931,
+    "deviation_code": null
+  },
+  "chain_of_custody": {
+    "pre_hash": "07b6f221487e31a3b486a6467019e57abcbaa3afd0f6a8d7e9ec5142cf80d1d6",
+    "post_hash": "30114558c40e3a65e4c3bc7e8081da66b8e5b13b6408b62dc239f6cde2ef81d6",
+    "binding": "1bd55a3b6c4c24aa881bedba7eca768970cfcfe869bfa88deaf36311bea09e6e",
+    "nonce": "f5bb79d93a9d837d3a4f83a987e29ed42c94b9695bcedeb61f2c791a2857a001",
+    "monotonic_counter": 2
+  },
+  "payload_evidence": {
+    "input_cas_uri": "cas://sha256:4835e9a582a8a1a58e31b995a92587b287bf1032eb0d34f87625d295a61c267b",
+    "output_cas_uri": "cas://sha256:66faba0ad0f35aaa6ce86ea88327c1b5c8e2f7940d9b4a81bdeb719ad52fe24f",
+    "input_payload": "deque([('credit_score', 720), ('credit_policy', 'credit_threshold: 650'), ('bureau_source', 'Equifax'), ('retrieval_doc_hash', 'sha256:abc123authorized'), ('branch:to:income_verification', None)])",
+    "output_payload": {
+      "credit_score": 720,
+      "credit_policy": "credit_threshold: 100",
+      "bureau_source": "Equifax",
+      "retrieval_doc_hash": "sha256:abc123authorized"
+    }
+  }
+}
+
+============================================================
+SCENARIO 3: Unauthorized Step — Schema Envelope Violation
+Graph executes a database_write node (type: SYNTHESIS) mapped to M2
+============================================================
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-inject-thread' | parent_checkpoint_id='None' | new_checkpoint_id='1f15b4ed-f65d-65f2-bfff-a730e159f6ff'
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-inject-thread' | parent_checkpoint_id='1f15b4ed-f65d-65f2-bfff-a730e159f6ff' | new_checkpoint_id='1f15b4ed-f65f-6492-8000-81462b633635'
+  [DHMC-WRAPPER] Sequential Sync: Waiting for put_writes of checkpoint=1f15b4ed-f65d-65f2-bfff-a730e159f6ff...
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, __start__' | thread=loan-inject-thread | checkpoint=1f15b4ed-f65d-65f2-bfff-a730e159f6ff -> node=None
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, intent_parser' | thread=loan-inject-thread | checkpoint=1f15b4ed-f65f-6492-8000-81462b633635 -> node=intent_parser
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, credit_retrieval' | thread=loan-inject-thread | checkpoint=1f15b4ed-f660-6efa-8001-969adb284a47 -> node=credit_retrieval
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, income_verification' | thread=loan-inject-thread | checkpoint=1f15b4ed-f662-61a6-8002-79b28b4e5318 -> node=income_verification
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, ofac_lookup' | thread=loan-inject-thread | checkpoint=1f15b4ed-f663-638a-8003-545d8ecae892 -> node=ofac_lookup
+  [NODE] Executing unauthorized database_write...
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, database_write' | thread=loan-inject-thread | checkpoint=1f15b4ed-f664-6528-8004-45003afca687 -> node=database_write
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, synthesis' | thread=loan-inject-thread | checkpoint=1f15b4ed-f665-65ea-8005-333358c15897 -> node=synthesis
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-inject-thread' | parent_checkpoint_id='1f15b4ed-f65f-6492-8000-81462b633635' | new_checkpoint_id='1f15b4ed-f660-6efa-8001-969adb284a47'
+  [DHMC-WRAPPER] Found writes for node=intent_parser. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=intent_parser | module=M1 | step_type=StepType.LLM
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-inject-thread' | parent_checkpoint_id='1f15b4ed-f660-6efa-8001-969adb284a47' | new_checkpoint_id='1f15b4ed-f662-61a6-8002-79b28b4e5318'
+  [DHMC-WRAPPER] Found writes for node=credit_retrieval. Registering step sequentially.
+[DHMC] ✓ Module M1 closed | steps=1 | H(M)=69702775629338ef...
+  [DHMC-WRAPPER] Registering step: node=credit_retrieval | module=M2 | step_type=StepType.RAG
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-inject-thread' | parent_checkpoint_id='1f15b4ed-f662-61a6-8002-79b28b4e5318' | new_checkpoint_id='1f15b4ed-f663-638a-8003-545d8ecae892'
+  [DHMC-WRAPPER] Found writes for node=income_verification. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=income_verification | module=M2 | step_type=StepType.TOOL
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-inject-thread' | parent_checkpoint_id='1f15b4ed-f663-638a-8003-545d8ecae892' | new_checkpoint_id='1f15b4ed-f664-6528-8004-45003afca687'
+  [DHMC-WRAPPER] Found writes for node=ofac_lookup. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=ofac_lookup | module=M2 | step_type=StepType.TOOL
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-inject-thread' | parent_checkpoint_id='1f15b4ed-f664-6528-8004-45003afca687' | new_checkpoint_id='1f15b4ed-f665-65ea-8005-333358c15897'
+  [DHMC-WRAPPER] Found writes for node=database_write. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=database_write | module=M2 | step_type=StepType.SYNTHESIS
+  [DHMC-WRAPPER] Intercepted put | thread_id='loan-inject-thread' | parent_checkpoint_id='1f15b4ed-f665-65ea-8005-333358c15897' | new_checkpoint_id='1f15b4ed-f666-65c6-8006-853b400c35ac'
+  [DHMC-WRAPPER] Found writes for node=synthesis. Registering step sequentially.
+[DHMC] ✓ Module M2 closed | steps=4 | H(M)=4ec7c77a6e67166e...
+  [DHMC-WRAPPER] Registering step: node=synthesis | module=M3 | step_type=StepType.LLM
+[DHMC] ✓ Module M3 closed | steps=1 | H(M)=aeaacb2286fb9de9...
+
+============================================================
+DHMC FORENSIC AUDIT REPORT
+Session:  loan-attack-inject-001
+Verdict:  POLICY_VIOLATION
+============================================================
+  [✓ PASS] Schema envelope conformance [M1]
+  [✓ PASS] Schema envelope conformance [M2]
+  [✓ PASS] Schema envelope conformance [M3]
+  [✓ PASS] Nonce uniqueness
+  [✗ FAIL] Deviation record review
+          Recorded deviation at step M2:step:0003:8cc0f8e2: DeviationCode.ENVELOPE_TYPE_VIOLATION
+          Evidence: {
+          "deviation_code": "ENVELOPE_TYPE_VIOLATION"
+}
+  [✓ PASS] Leaf hash recomputation (all steps)
+  [✓ PASS] Monotonic counter ordering
+  [✓ PASS] Module chain linkage [M1]
+  [✓ PASS] Module chain linkage [M2]
+  [✓ PASS] Module chain linkage [M3]
+  [✓ PASS] CAS payload integrity
+============================================================
+
+
+============================================================
+SCENARIO 4: Recursive Sub-Agent Provenance in LangGraph
+============================================================
+
+[Pregel] Starting real parent LangGraph loop...
+  [DHMC-WRAPPER] Intercepted put | thread_id='parent-thread' | parent_checkpoint_id='None' | new_checkpoint_id='1f15b4ee-2626-640a-bfff-e0870e07f544'
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, __start__' | thread=parent-thread | checkpoint=1f15b4ee-2626-640a-bfff-e0870e07f544 -> node=None
+  [DHMC-WRAPPER] Intercepted put | thread_id='parent-thread' | parent_checkpoint_id='1f15b4ee-2626-640a-bfff-e0870e07f544' | new_checkpoint_id='1f15b4ee-2627-676a-8000-73fdc0449c5a'
+  [DHMC-WRAPPER] Sequential Sync: Waiting for put_writes of checkpoint=1f15b4ee-2626-640a-bfff-e0870e07f544...
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, intent_parser' | thread=parent-thread | checkpoint=1f15b4ee-2627-676a-8000-73fdc0449c5a -> node=intent_parser
+  [NODE] Spawning sub-agent for bureau lookup...
+[DHMC] Sub-agent spawned | parent_step=M2:step:0001:credit- | genesis_binding=0d742196a169a4d3...
+
+[Pregel] Running child sub-graph...
+  [DHMC-WRAPPER] Intercepted put | thread_id='child-thread' | parent_checkpoint_id='None' | new_checkpoint_id='1f15b4ee-262a-6488-bfff-e4fba2fb0c49'
+  [DHMC-WRAPPER] Intercepted put | thread_id='child-thread' | parent_checkpoint_id='1f15b4ee-262a-6488-bfff-e4fba2fb0c49' | new_checkpoint_id='1f15b4ee-262a-6dd4-8000-f40fe0c57b3b'
+  [DHMC-WRAPPER] Sequential Sync: Waiting for put_writes of checkpoint=1f15b4ee-262a-6488-bfff-e4fba2fb0c49...
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, __start__' | thread=child-thread | checkpoint=1f15b4ee-262a-6488-bfff-e4fba2fb0c49 -> node=None
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, sub_node' | thread=child-thread | checkpoint=1f15b4ee-262a-6dd4-8000-f40fe0c57b3b -> node=sub_node
+  [DHMC-WRAPPER] Intercepted put | thread_id='parent-thread' | parent_checkpoint_id='1f15b4ee-2627-676a-8000-73fdc0449c5a' | new_checkpoint_id='1f15b4ee-2628-65b6-8001-6e687b3cdb1d'
+  [DHMC-WRAPPER] Found writes for node=intent_parser. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=intent_parser | module=M1 | step_type=StepType.LLM
+  [DHMC-WRAPPER] Intercepted put | thread_id='child-thread' | parent_checkpoint_id='1f15b4ee-262a-6dd4-8000-f40fe0c57b3b' | new_checkpoint_id='1f15b4ee-262b-686a-8001-9ebdd7fb323f'
+  [DHMC-WRAPPER] Found writes for node=sub_node. Registering step sequentially.
+  [DHMC-WRAPPER] Registering step: node=sub_node | module=sub_M1 | step_type=StepType.RAG
+[Pregel] Child sub-graph execution finished.
+[DHMC] ✓ Module sub_M1 closed | steps=1 | H(M)=8dcf149cfdda3ff2...
+[Sub-agent] Child chain final hash: 8dcf149cfdda3ff21cf2204d...
+  [DHMC-WRAPPER] Intercepted put | thread_id='parent-thread' | parent_checkpoint_id='1f15b4ee-2628-65b6-8001-6e687b3cdb1d' | new_checkpoint_id='1f15b4ee-55e8-6f3a-8002-cbfdcbf0519b'
+  [DHMC-WRAPPER] Sequential Sync: Waiting for put_writes of checkpoint=1f15b4ee-2628-65b6-8001-6e687b3cdb1d...
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, synthesis' | thread=parent-thread | checkpoint=1f15b4ee-55e8-6f3a-8002-cbfdcbf0519b -> node=synthesis
+  [DHMC-WRAPPER] Intercepted put_writes | task_path='~__pregel_pull, bureau_lookup_agent' | thread=parent-thread | checkpoint=1f15b4ee-2628-65b6-8001-6e687b3cdb1d -> node=bureau_lookup_agent
+  [DHMC-WRAPPER] Found writes for node=bureau_lookup_agent. Registering step sequentially.
+[DHMC] ✓ Module M1 closed | steps=1 | H(M)=6eaba697fa4e67bc...
+  [DHMC-WRAPPER] Collapsing subagent child chain into parent MMR: node=bureau_lookup_agent
+  [DHMC-WRAPPER] Intercepted put | thread_id='parent-thread' | parent_checkpoint_id='1f15b4ee-55e8-6f3a-8002-cbfdcbf0519b' | new_checkpoint_id='1f15b4ee-55ea-6d76-8003-9ad8307193d6'
+  [DHMC-WRAPPER] Found writes for node=synthesis. Registering step sequentially.
+[DHMC] ✓ Module M2 closed | steps=1 | H(M)=252555e486816d50...
+  [DHMC-WRAPPER] Registering step: node=synthesis | module=M3 | step_type=StepType.LLM
+[DHMC] ✓ Module M3 closed | steps=1 | H(M)=d952c72fa724b52f...
+[Pregel] Parent LangGraph loop finished.
+
+============================================================
+DHMC FORENSIC AUDIT REPORT
+Session:  loan-subagent-001
+Verdict:  CLEAN
+============================================================
+  [✓ PASS] Schema envelope conformance [M1]
+  [✓ PASS] Schema envelope conformance [M2]
+  [✓ PASS] Schema envelope conformance [M3]
+  [✓ PASS] Nonce uniqueness
+  [✓ PASS] Deviation record review
+  [✓ PASS] Leaf hash recomputation (all steps)
+  [✓ PASS] Monotonic counter ordering
+  [✓ PASS] Module chain linkage [M1]
+  [✓ PASS] Module chain linkage [M2]
+  [✓ PASS] Module chain linkage [M3]
+  [✓ PASS] CAS payload integrity
+============================================================
+
+
+============================================================
+LANGGRAPH DHMC MONITORED PIPELINE COMPLETE — All four scenarios demonstrated
+============================================================

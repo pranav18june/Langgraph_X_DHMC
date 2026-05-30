@@ -1,0 +1,10 @@
+Elements: 1000   | Mean: 0.0019ms | Stdev: 0.0013ms
+Elements: 1000   | Mean: 0.0018ms | Stdev: 0.0012ms
+Elements: 1000   | Mean: 0.0021ms | Stdev: 0.0014ms
+Elements: 1000   | Mean: 0.0021ms | Stdev: 0.0014ms
+Elements: 1000   | Mean: 0.0020ms | Stdev: 0.0014ms
+Elements: 1000   | Mean: 0.0021ms | Stdev: 0.0014ms
+Elements: 2000   | Mean: 0.0035ms | Stdev: 0.0022ms
+Elements: 2000   | Mean: 0.0035ms | Stdev: 0.0022ms
+Elements: 2000   | Mean: 0.0040ms | Stdev: 0.0026ms
+Elements: 2000   | Mean: 0.0049ms | Stdev: 0.0067ms
