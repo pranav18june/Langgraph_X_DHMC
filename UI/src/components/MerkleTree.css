@@ -32,20 +32,53 @@
   position: relative;
   overflow-x: auto;
   padding: 16px 0;
+  min-height: 200px;
+}
+
+/* SVG Lines Layer */
+.merkle-svg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1; /* behind nodes */
+}
+
+.merkle-edge {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 2;
+  transition: all 0.3s ease;
+}
+
+.merkle-edge.carry-over {
+  stroke-dasharray: 4 4;
+  stroke: rgba(255, 255, 255, 0.04);
+}
+
+.merkle-edge.active {
+  stroke: url(#active-line);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.4));
+  stroke-dasharray: none;
 }
 
 .merkle-levels {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 36px;
+  gap: 48px; /* Increased gap for visible lines */
+  position: relative;
+  z-index: 2; /* above svg */
 }
 
 .merkle-level {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 32px; /* Increased gap for clear branching */
   width: 100%;
 }
 
@@ -57,12 +90,15 @@
   gap: 6px;
   cursor: pointer;
   position: relative;
-  transition: transform 0.2s ease;
-  
+  transition: transform 0.2s ease, opacity 0.3s ease;
   animation: merkleNodeAppear 0.5s ease forwards;
 }
 
-.merkle-node:hover { transform: translateY(-3px); }
+.merkle-node.dimmed {
+  opacity: 0.25;
+}
+
+.merkle-node:hover { transform: translateY(-3px); opacity: 1; }
 
 .merkle-node-circle {
   width: 44px;
@@ -100,8 +136,8 @@
 
 /* Internal node */
 .merkle-node.internal .merkle-node-circle {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-color: rgba(255, 255, 255, 0.06);
   background: rgba(30, 41, 59, 0.6);
 }
@@ -115,11 +151,12 @@
 
 .peak-icon {
   position: absolute;
-  top: -10px;
+  top: -12px;
   left: 50%;
   transform: translateX(-50%);
   color: #f59e0b;
   z-index: 2;
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
 }
 
 /* Hash labels */
@@ -150,7 +187,7 @@
   font-size: 10px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.3);
-  max-width: 72px;
+  max-width: 80px;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -162,19 +199,19 @@
 /* Full hash tooltip */
 .merkle-full-hash {
   position: absolute;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 15px);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(9, 9, 11, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.8);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   padding: 6px 12px;
   border-radius: 8px;
   white-space: nowrap;
   pointer-events: none;
-  
+  opacity: 0;
   transition: opacity 0.2s ease;
   z-index: 20;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -185,15 +222,20 @@
 /* Selected */
 .merkle-node.selected .merkle-node-circle {
   border-width: 2.5px;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.4);
+  border-color: #2dd4bf;
+}
+.merkle-node.selected .merkle-node-inner {
+  color: #2dd4bf;
 }
 
 /* Legend */
 .merkle-legend {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px;
-  margin-top: 20px;
+  margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   flex-wrap: wrap;
@@ -229,18 +271,18 @@
 
 /* Animations */
 @keyframes merkleNodeAppear {
-  from {  transform: scale(0.7) translateY(10px); }
+  from {  transform: scale(0.7) translateY(10px); opacity: 0; }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @keyframes peakGlow {
   0%, 100% { box-shadow: 0 0 12px rgba(245, 158, 11, 0.08); }
-  50% { box-shadow: 0 0 24px rgba(245, 158, 11, 0.15); }
+  50% { box-shadow: 0 0 24px rgba(245, 158, 11, 0.25); }
 }
 
 @media (max-width: 768px) {
-  .merkle-level { gap: 12px; }
-  .merkle-levels { gap: 28px; }
+  .merkle-level { gap: 16px; }
+  .merkle-levels { gap: 36px; }
   .merkle-node-circle { width: 36px; height: 36px; }
   .merkle-node.internal .merkle-node-circle { width: 32px; height: 32px; }
 }

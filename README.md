@@ -26,7 +26,7 @@ By intercepting state transitions at the checkpoint boundary, DHMC constructs an
 The project now includes a complete full-stack forensic auditing dashboard:
 * **Frontend (React + Vite)**: A dynamic, glassmorphism-styled UI for real-time visualization of the Merkle Tree, cryptographic pipeline, and audit scenario logs.
 * **Backend (FastAPI)**: A robust Python backend orchestrating DHMC audit triggers, wrapped around the LangGraph checkpointer.
-* **Infrastructure**: Completely dockerized with `docker-compose`, spinning up Postgres, Redis, the Node.js UI server, and the Python backend seamlessly.
+* **Infrastructure**: Run the Node.js UI server and the Python backend locally for a seamless development experience.
 
 ---
 
@@ -46,7 +46,6 @@ The project now includes a complete full-stack forensic auditing dashboard:
 ```text
 ├── UI/                         # React + Vite Frontend Dashboard
 │   ├── src/                    # Frontend source code (Components, Pages, etc.)
-│   ├── Dockerfile.node         # Docker configuration for the UI
 │   └── package.json            # Node dependencies
 ├── dhmc/                       # Core DHMC cryptographic modules
 │   ├── auditor.py              # The 7-check Forensic Audit engine
@@ -56,8 +55,6 @@ The project now includes a complete full-stack forensic auditing dashboard:
 │   ├── schema_envelope.py      # Schema envelope validation
 │   └── loan_approval.py        # LangGraph nodes and execution definitions
 ├── api.py                      # FastAPI Backend server
-├── docker-compose.yml          # Multi-container orchestration (UI, Backend, Postgres, Redis)
-├── Dockerfile.python           # Docker configuration for the Python Backend
 ├── dhmc_integration/           # CLI/Script-based execution demo
 ├── dhmc_langgraph_wrapper.py   # The transparent wrapper over BaseCheckpointSaver
 └── requirements.txt            # Python dependencies
@@ -67,19 +64,24 @@ The project now includes a complete full-stack forensic auditing dashboard:
 
 ## 🛠️ Quickstart Guide
 
-### Option 1: Run Full-Stack via Docker (Recommended)
-The easiest way to experience the DHMC LangGraph integration and visual dashboard is via Docker Compose:
+### Run Full-Stack Locally (Recommended)
+The easiest way to experience the DHMC LangGraph integration and visual dashboard is by running the services locally:
 
-1. Ensure Docker and Docker Compose are installed.
-2. Clone the repository and run:
+1. Clone the repository.
+2. Start the Python Backend:
    ```bash
-   docker-compose up --build
+   pip install -r requirements.txt
+   uvicorn api:app --reload
    ```
-3. Open your browser and navigate to:
-   * **Dashboard UI**: `http://localhost:5173`
-   * **Backend API**: `http://localhost:8000`
+3. Start the Frontend Dashboard:
+   ```bash
+   cd UI
+   npm install
+   npm run dev
+   ```
+4. Open your browser and navigate to the Dashboard UI (typically `http://localhost:5173`).
 
-### Option 2: Run CLI Demo locally
+### Run CLI Demo locally
 If you only want to run the python cryptographic library without the UI:
 ```bash
 pip install -r requirements.txt

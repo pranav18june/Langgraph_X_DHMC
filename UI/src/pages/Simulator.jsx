@@ -34,7 +34,7 @@ export default function Simulator() {
   const [historyList, setHistoryList] = useState([])
   const [activeSessionId, setActiveSessionId] = useState(null)
 
-  const API_BASE = 'http://localhost:5001/api'
+  const API_BASE = 'http://localhost:8000/api'
 
   // Check backend server health
   const checkBackendHealth = useCallback(async () => {

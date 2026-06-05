@@ -82,13 +82,13 @@
 
 /* Module Card */
 .pipeline-module {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 200px;
   background: rgba(15, 23, 42, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   backdrop-filter: blur(16px);
-  overflow: hidden;
+  overflow: visible;
   transition: border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
@@ -142,8 +142,7 @@
 .module-steps {
   display: flex;
   align-items: center;
-  padding: 20px 16px;
-  overflow-x: auto;
+  padding: 40px 16px 24px;
 }
 
 /* Step connector */
@@ -151,7 +150,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  width: 28px;
+  width: 44px;
 }
 
 .step-connector-line {
@@ -223,7 +222,7 @@
   font-weight: 500;
   color: rgba(255, 255, 255, 0.45);
   text-align: center;
-  max-width: 72px;
+  max-width: 110px;
   line-height: 1.3;
   transition: color 0.4s ease;
   white-space: nowrap;
@@ -284,7 +283,7 @@
 
 .attack-tooltip {
   position: absolute;
-  top: -36px;
+  top: -46px; /* move slightly higher so it doesn't overlap the badge */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(239, 68, 68, 0.9);
@@ -293,10 +292,13 @@
   font-weight: 500;
   padding: 4px 10px;
   border-radius: 6px;
-  white-space: nowrap;
+  white-space: normal; /* allow text to wrap */
+  width: max-content; /* take as much space as it needs up to max-width */
+  max-width: 180px; /* prevent it from being infinitely long */
+  text-align: center; /* keep wrapped text centered */
   pointer-events: none;
   transition: opacity 0.2s ease;
-  z-index: 10;
+  z-index: 100; /* ensure it stays on top of adjacent nodes/modules */
 }
 
 .step-node.attack:hover .attack-tooltip { opacity: 1; }
