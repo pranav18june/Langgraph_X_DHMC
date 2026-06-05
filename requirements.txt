@@ -1,0 +1,16 @@
+# Core DHMC dependencies
+blake3>=1.0.0
+
+# LangGraph integration
+langgraph>=0.2.0
+langchain-core>=0.3.0
+
+# API server (optional)
+fastapi>=0.100.0
+uvicorn>=0.20.0
+PyJWT>=2.0.0
+python-dotenv>=0.20.0
+
+# Development / Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0

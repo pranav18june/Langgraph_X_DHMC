@@ -34,7 +34,7 @@ class DeviationCode(str, Enum):
     SUBAGENT_LEAF_MISMATCH   = "SUBAGENT_LEAF_MISMATCH"
 
 
-@dataclass
+@dataclass(frozen=True)
 class SchemaEnvelope:
     """
     Policy-bounded execution envelope for one macro-module.
@@ -43,9 +43,9 @@ class SchemaEnvelope:
     module_id: str
     min_steps: int
     max_steps: int
-    allowed_types: Set[StepType]
+    allowed_types: frozenset
     max_depth: int = 1                          # Max subagent recursion depth
-    allowed_branches: Optional[Set[str]] = None # Pre-committed branch identifiers
+    allowed_branches: Optional[frozenset] = None # Pre-committed branch identifiers
     epoch_size: int = 50                        # MMR epoch boundary
 
     def to_commitment_bytes(self) -> bytes:

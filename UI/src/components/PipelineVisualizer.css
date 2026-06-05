@@ -1,0 +1,362 @@
+.pipeline-visualizer {
+  width: 100%;
+  padding: 24px;
+}
+
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.pipeline-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pipeline-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pipeline-status-badge.complete {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.pipeline-status-badge.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* Modules */
+.pipeline-modules {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.module-connector {
+  display: flex;
+  align-items: center;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.module-connector-line {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.4), rgba(59, 130, 246, 0.15));
+  position: relative;
+}
+
+.module-connector-line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid rgba(59, 130, 246, 0.4);
+}
+
+.module-connector.active .module-connector-line {
+  background: linear-gradient(90deg, #3b82f6, rgba(59, 130, 246, 0.5));
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+.module-connector.active .module-connector-line::after {
+  border-left-color: #3b82f6;
+}
+
+/* Module Card */
+.pipeline-module {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.pipeline-module.active {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.08);
+}
+
+.pipeline-module.completed {
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.pipeline-module.has-failure {
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.module-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.module-id-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+
+.pipeline-module.m2 .module-id-badge {
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.pipeline-module.m3 .module-id-badge {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.module-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.module-steps {
+  display: flex;
+  align-items: center;
+  padding: 20px 16px;
+  overflow-x: auto;
+}
+
+/* Step connector */
+.step-connector {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 28px;
+}
+
+.step-connector-line {
+  width: 100%;
+  height: 1.5px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.4s ease;
+}
+
+.step-connector.active .step-connector-line { background: rgba(59, 130, 246, 0.5); }
+.step-connector.completed .step-connector-line { background: rgba(16, 185, 129, 0.4); }
+
+/* Step Node */
+.step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease;
+  animation: stepAppear 0.4s ease forwards;
+}
+
+.step-node:hover { transform: translateY(-2px); }
+
+.step-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.4s ease;
+  border: 2px solid transparent;
+}
+
+.step-circle.pending {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.step-circle.pending .step-icon { color: rgba(255, 255, 255, 0.25); }
+
+.step-circle.running {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4);
+  animation: stepPulse 2s ease-in-out infinite;
+}
+.step-circle.running .step-icon { color: #3b82f6; }
+
+.step-circle.complete {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.step-circle.complete .step-icon { color: #10b981; }
+
+.step-circle.failed {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.step-circle.failed .step-icon { color: #ef4444; }
+
+.step-icon { width: 22px; height: 22px; transition: color 0.4s ease; }
+
+.step-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+  max-width: 72px;
+  line-height: 1.3;
+  transition: color 0.4s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.step-node:hover .step-label { color: rgba(255, 255, 255, 0.8); }
+
+.step-type-badge {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: -2px;
+}
+
+/* Status dot */
+.status-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(15, 23, 42, 0.9);
+  z-index: 2;
+}
+
+.status-dot.pending { background: #4b5563; }
+.status-dot.running { background: #3b82f6; animation: dotPulse 1.5s ease-in-out infinite; }
+.status-dot.complete { background: #10b981; }
+.status-dot.failed { background: #ef4444; }
+
+/* Attack styles */
+.step-node.attack .step-circle {
+  border-style: dashed;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.attack-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.attack-badge svg { width: 11px; height: 11px; color: white; }
+
+.attack-tooltip {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.step-node.attack:hover .attack-tooltip { opacity: 1; }
+
+/* Animations */
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.2); }
+  50% { box-shadow: 0 0 16px 4px rgba(59, 130, 246, 0.15); }
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+@keyframes stepAppear {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.step-node:nth-child(1) { animation-delay: 0.05s; }
+.step-node:nth-child(2) { animation-delay: 0.1s; }
+.step-node:nth-child(3) { animation-delay: 0.15s; }
+.step-node:nth-child(4) { animation-delay: 0.2s; }
+.step-node:nth-child(5) { animation-delay: 0.25s; }
+.step-node:nth-child(6) { animation-delay: 0.3s; }
+
+.pipeline-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .pipeline-modules { flex-direction: column; }
+  .module-connector {
+    width: auto;
+    height: 32px;
+    justify-content: center;
+  }
+  .module-connector-line {
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.4), rgba(59, 130, 246, 0.15));
+  }
+  .module-connector-line::after {
+    right: auto;
+    bottom: -1px;
+    top: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top: 7px solid rgba(59, 130, 246, 0.4);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: none;
+  }
+  .pipeline-module { min-width: unset; }
+  .module-steps { flex-wrap: wrap; justify-content: center; gap: 8px; }
+}

@@ -1,0 +1,360 @@
+/* ============================================================
+   Landing Page Styles
+   ============================================================ */
+
+/* ── Hero ─────────────────────────────────────────────── */
+.landing__hero {
+  text-align: center;
+  padding: var(--space-3xl) 0;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.landing__hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--blue-400);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: var(--space-xl);
+}
+
+.landing__hero-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-lg);
+  color: var(--text-primary);
+}
+
+.landing__hero-highlight {
+  background: linear-gradient(135deg, var(--blue-400) 0%, var(--cyan-400) 50%, var(--purple-400) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.landing__hero-subtitle {
+  font-size: 1.175rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 680px;
+  margin: 0 auto var(--space-xl);
+}
+
+.landing__hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-3xl);
+}
+
+/* ── Pipeline Mini-Viz ─────────────────────────────────── */
+.landing__pipeline {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.landing__pipeline-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-md);
+}
+
+.landing__pipeline-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: var(--space-md);
+}
+
+.landing__pipeline-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.landing__pipeline-arrow {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.landing__pipeline-step {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  text-align: center;
+  position: relative;
+  transition: all var(--transition-normal);
+  min-width: 140px;
+}
+
+.landing__pipeline-step:hover {
+  border-color: var(--step-color, var(--blue-500));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--step-color, var(--blue-500)) 25%, transparent);
+}
+
+.landing__pipeline-step-label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--step-color, var(--blue-400));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.landing__pipeline-step-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.landing__pipeline-step-type {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.landing__pipeline-step-hash {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--cyan-400);
+  opacity: 0.7;
+}
+
+.landing__pipeline-shield {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--green-400);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ── Section ──────────────────────────────────────────── */
+.landing__section {
+  padding: var(--space-3xl) 0;
+}
+
+/* ── Problem Cards ─────────────────────────────────────── */
+.landing__problem-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  transition: all var(--transition-normal);
+  animation-fill-mode: forwards;
+}
+
+.landing__problem-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--card-color);
+  box-shadow: 0 8px 32px var(--card-glow);
+}
+
+.landing__problem-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--card-color, var(--blue-500)) 12%, transparent);
+  color: var(--card-color, var(--blue-500));
+  margin-bottom: var(--space-md);
+}
+
+.landing__problem-card h3 {
+  font-size: 1.125rem;
+  margin-bottom: var(--space-sm);
+}
+
+.landing__problem-card p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ── How It Works ──────────────────────────────────────── */
+.landing__how-it-works {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.landing__hiw-step {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: flex-start;
+  animation-fill-mode: forwards;
+}
+
+.landing__hiw-number {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-500));
+  color: white;
+  font-weight: 800;
+  font-size: 1.125rem;
+  box-shadow: 0 4px 16px var(--blue-glow);
+}
+
+.landing__hiw-content h4 {
+  margin-bottom: 4px;
+  font-size: 1.0625rem;
+}
+
+.landing__hiw-content p {
+  font-size: 0.9rem;
+}
+
+.landing__hiw-connector {
+  width: 2px;
+  height: 32px;
+  margin-left: 21px;
+  background: linear-gradient(180deg, var(--blue-500), rgba(59, 130, 246, 0.1));
+  border-radius: 1px;
+}
+
+/* ── Feature Cards ─────────────────────────────────────── */
+.landing__feature-card {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  transition: all var(--transition-normal);
+  animation-fill-mode: forwards;
+}
+
+.landing__feature-card:hover {
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+}
+
+.landing__feature-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--blue-400);
+}
+
+.landing__feature-card h4 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.landing__feature-card p {
+  font-size: 0.875rem;
+}
+
+/* ── CTA ──────────────────────────────────────────────── */
+.landing__cta {
+  padding: var(--space-3xl) 0;
+}
+
+.landing__cta-inner {
+  text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3xl) var(--space-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.landing__cta-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--blue-500), transparent);
+}
+
+.landing__cta-icon {
+  color: var(--blue-400);
+  margin-bottom: var(--space-md);
+}
+
+.landing__cta-inner h2 {
+  font-size: 1.75rem;
+  margin-bottom: var(--space-sm);
+}
+
+.landing__cta-inner p {
+  max-width: 500px;
+  margin: 0 auto var(--space-lg);
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .landing__hero-title {
+    font-size: 2.25rem;
+  }
+
+  .landing__hero-actions {
+    flex-direction: column;
+  }
+
+  .landing__pipeline-flow {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .landing__pipeline-arrow {
+    transform: rotate(90deg);
+  }
+
+  .landing__pipeline-step {
+    min-width: 200px;
+  }
+
+  .landing__hiw-step {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .landing__hiw-connector {
+    margin-left: 0;
+  }
+}

@@ -23,6 +23,8 @@ import time
 import random
 from typing import Any, Dict, Optional
 
+_demo_rng = random.Random(42)
+
 
 # ── Simulated LangGraph node functions ────────────────────────────────────────
 # In real LangGraph these would be decorated with @dhmc_node wrapper.
@@ -206,7 +208,7 @@ def run_loan_approval_pipeline(
         print(f"  [DHMC] Deviation detected: {rec.deviation}")
 
     # Conditional step: fraud check (dynamic topology — the key DHMC claim)
-    risk_score = random.random()
+    risk_score = _demo_rng.random()
     if risk_score > 0.4 or inject_attack == "context_hijack":
         print(f"  [M2] Risk signal {risk_score:.2f} > 0.4 — triggering fraud check (dynamic step)")
         input_m2s4 = dict(state)

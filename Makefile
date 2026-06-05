@@ -60,6 +60,8 @@ lock-upgrade:
 # Test all projects
 .PHONY: test
 test:
+	@echo "Running DHMC core tests"
+	PYTHONPATH=. python -m pytest tests/ -v
 	@for dir in $(LIBS_DIRS); do \
 		if [ -f $$dir/Makefile ]; then \
 			echo "Running test in $$dir"; \

@@ -59,11 +59,12 @@ By intercepting state transitions at the checkpoint boundary, DHMC constructs an
 ## 🛠️ Quickstart Guide
 
 ### 1. Requirements & Setup
-DHMC is designed for extreme portability and speed. It has **zero external pip dependencies** and relies exclusively on Python standard library modules (`hashlib`, `json`, `os`, `uuid`, `hmac`).
+DHMC requires minimal external dependencies and relies primarily on Python standard library modules. The only required external dependency is the `blake3` hashing library.
 
 Ensure your python environment has LangGraph installed:
 ```bash
 pip install -U langgraph
+pip install blake3
 ```
 
 ### 2. Run the LangGraph Multi-Scenario Demo

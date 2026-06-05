@@ -15,12 +15,7 @@ import json
 import time
 from dataclasses import dataclass
 
-
-def _blake3(*parts: bytes) -> bytes:
-    h = hashlib.sha3_256()
-    for p in parts:
-        h.update(p)
-    return h.digest()
+from .crypto import _blake3
 
 
 @dataclass
@@ -33,16 +28,23 @@ class RegistrationToken:
     enclave_sig: bytes         # HMAC with session key (simulates TEE attestation)
 
 
-class SimulatedTEEEnclave:
+class SoftwareSimulatedEnclave:
     """
-    Simulates a Trusted Execution Environment enclave.
+    SOFTWARE SIMULATION of a Trusted Execution Environment enclave.
+    
+    ⚠️ WARNING: This class simulates TEE properties in standard Python.
+    All security guarantees (session key isolation, TRNG unpredictability,
+    monotonic counter non-resettability) are ILLUSTRATIVE ONLY and do not
+    hold against an adversary with access to this Python process.
+    
+    For production deployment, replace this class with a real TEE interface
+    communicating via Unix socket or vsock to a hardware enclave
+    (Intel SGX, AMD SEV-SNP, AWS Nitro Enclave).
     
     Boundary properties modeled:
     - Session key inaccessible to orchestrator (held only in this object)
     - TRNG output unpredictable to orchestrator  
     - Monotonic counter non-resettable by orchestrator
-    
-    Production replacement: Unix socket to actual enclave process.
     """
 
     def __init__(self, session_id: str):
@@ -95,6 +97,27 @@ class SimulatedTEEEnclave:
             enclave_sig=sig,
         )
 
+    def issue_genesis_commitment(self, query_hash: bytes, envelope_hashes: dict) -> "GenesisCommitment":
+        from .schema_envelope import GenesisCommitment
+        self._monotonic_counter += 1
+        
+        d = {
+            "session_id": self.session_id,
+            "query_hash": query_hash.hex(),
+            "counter": self._monotonic_counter,
+            "envelopes": {k: v.hex() for k, v in envelope_hashes.items()},
+        }
+        sig_payload = json.dumps(d, sort_keys=True).encode()
+        sig = hmac.new(self._session_key, sig_payload, hashlib.sha256).digest()
+        
+        return GenesisCommitment(
+            session_id=self.session_id,
+            query_hash=query_hash,
+            monotonic_counter=self._monotonic_counter,
+            envelope_hashes=envelope_hashes,
+            enclave_sig=sig
+        )
+
     def advance_module(self, new_module_hash: bytes):
         """
         Called at module boundary. Updates the live chain state H(M_{t-1})
@@ -129,3 +152,7 @@ class SimulatedTEEEnclave:
     @property
     def current_module_hash(self) -> bytes:
         return self._prev_module_hash
+
+
+# Backward-compatible alias
+SimulatedTEEEnclave = SoftwareSimulatedEnclave

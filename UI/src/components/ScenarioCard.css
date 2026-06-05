@@ -1,0 +1,86 @@
+.scenario-card {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.scenario-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.scenario-card--selected {
+  border-color: var(--scenario-color, #3b82f6);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--scenario-color, #3b82f6) 30%, transparent),
+              inset 0 0 24px color-mix(in srgb, var(--scenario-color, #3b82f6) 6%, transparent);
+}
+
+.scenario-card--selected:hover {
+  border-color: var(--scenario-color, #3b82f6);
+  box-shadow: 0 0 32px color-mix(in srgb, var(--scenario-color, #3b82f6) 40%, transparent),
+              inset 0 0 32px color-mix(in srgb, var(--scenario-color, #3b82f6) 8%, transparent);
+}
+
+.scenario-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 16px;
+  background: color-mix(in srgb, var(--scenario-color, #3b82f6) 15%, transparent);
+  transition: background 0.3s ease;
+}
+
+.scenario-card--selected .scenario-card__icon {
+  background: color-mix(in srgb, var(--scenario-color, #3b82f6) 25%, transparent);
+}
+
+.scenario-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 4px;
+}
+
+.scenario-card__subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--scenario-color, #3b82f6);
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.scenario-card__description {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.6;
+}
+
+.scenario-card__indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--scenario-color, #3b82f6);
+  transition: opacity 0.3s ease;
+}
+
+.scenario-card--selected .scenario-card__indicator {
+  opacity: 1;
+  box-shadow: 0 0 8px var(--scenario-color, #3b82f6);
+}

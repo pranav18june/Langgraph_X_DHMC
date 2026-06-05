@@ -1,6 +1,8 @@
 import sys
 import os
 import random
+
+_demo_rng = random.Random(42)
 from typing import TypedDict, Optional
 
 # Ensure we can import dhmc, dhmc_langgraph_wrapper, and libs
@@ -15,6 +17,7 @@ from dhmc_langgraph_wrapper import DHMCWrappedCheckpointer
 from dhmc.langgraph_checkpointer import DHMCCheckpointer
 from dhmc.schema_envelope import SchemaEnvelope, StepType
 from dhmc.auditor import DHMCAuditor
+from tests.testing_utils import simulate_post_execution_tamper
 from dhmc.loan_approval import (
     node_intent_parser,
     node_credit_score_retrieval,
@@ -53,26 +56,26 @@ class LoanState(TypedDict, total=False):
     # Output of unauthorized node for Scenario 3
     database_rows_modified: int
 
+from langchain_core.runnables import RunnableConfig
+
 # Unauthorized node for Scenario 3
 def node_database_write(state: LoanState) -> dict:
     print("  [NODE] Executing unauthorized database_write...")
     return {"database_rows_modified": 47}
 
-# Shared parent wrapper reference for Scenario 4 sub-agent execution
-shared_parent_wrapper = None
-
-def node_bureau_lookup_agent(state: LoanState) -> dict:
+def node_bureau_lookup_agent(state: LoanState, config: RunnableConfig) -> dict:
     print("  [NODE] Spawning sub-agent for bureau lookup...")
+    parent_wrapper = config["configurable"]["dhmc_wrapper"]
     parent_step_id = "M2:step:0001:credit-retrieval"
     
     # Spawn child checkpointer using the core DHMC spawn method
-    child_dhmc = shared_parent_wrapper.dhmc.spawn_subagent_dhmc(
+    child_dhmc = parent_wrapper.dhmc.spawn_subagent_dhmc(
         parent_module_id="M2",
         parent_step_id=parent_step_id
     )
     
     # Configure envelopes for sub-agent
-    child_dhmc.envelopes["sub_M1"] = SchemaEnvelope("sub_M1", 1, 3, {StepType.RAG, StepType.TOOL})
+    child_dhmc.envelopes["sub_M1"] = SchemaEnvelope("sub_M1", 1, 3, frozenset([StepType.RAG, StepType.TOOL]))
     # Pre-populate module states
     child_dhmc.module_states["sub_M1"] = __import__(
         'dhmc.langgraph_checkpointer', fromlist=['DHMCModuleState']
@@ -109,7 +112,7 @@ def node_bureau_lookup_agent(state: LoanState) -> dict:
     print(f"[Sub-agent] Child chain final hash: {child_dhmc.enclave.current_module_hash.hex()[:24]}...")
     
     # Register the spawned child checkpointer in-memory in parent checkpointer wrapper for automatic collapse!
-    shared_parent_wrapper.register_child_dhmc(child_dhmc)
+    parent_wrapper.register_child_dhmc(child_dhmc)
     
     return {
         "credit_score": 750,
@@ -121,33 +124,35 @@ def node_bureau_lookup_agent(state: LoanState) -> dict:
 def route_after_ofac(state: LoanState) -> str:
     # Trigger fraud check on low scores or random risk
     injected = state.get("_injected_score")
-    if (injected is not None and injected < 650) or random.random() > 0.4:
+    if (injected is not None and injected < 650) or _demo_rng.random() > 0.4:
         print("  [ROUTER] Risk signal detected or attack simulation active -> Routing to fraud_check")
         return "fraud_check"
     print("  [ROUTER] Direct routing to synthesis")
     return "synthesis"
 
 # Factory for DHMCCheckpointer
-def build_dhmc(session_id: str) -> DHMCCheckpointer:
+def build_dhmc(session_id: str, m2_min_steps: int = 1, m2_allowed_types: set = None) -> DHMCCheckpointer:
+    if m2_allowed_types is None:
+        m2_allowed_types = {StepType.RAG, StepType.TOOL, StepType.VALIDATION}
     return DHMCCheckpointer(
         session_id=session_id,
         envelopes={
             "M1": SchemaEnvelope(
                 module_id="M1",
                 min_steps=1, max_steps=3,
-                allowed_types={StepType.LLM},
+                allowed_types=frozenset([StepType.LLM]),
             ),
             "M2": SchemaEnvelope(
                 module_id="M2",
-                min_steps=1, max_steps=5,
-                allowed_types={StepType.RAG, StepType.TOOL, StepType.VALIDATION, StepType.SUBAGENT},
-                allowed_branches={"fraud_check", "standard"},
+                min_steps=m2_min_steps, max_steps=5,
+                allowed_types=frozenset(m2_allowed_types),
+                allowed_branches=frozenset(["fraud_check", "standard"]),
                 epoch_size=10,
             ),
             "M3": SchemaEnvelope(
                 module_id="M3",
                 min_steps=1, max_steps=2,
-                allowed_types={StepType.LLM, StepType.SYNTHESIS},
+                allowed_types=frozenset([StepType.LLM, StepType.SYNTHESIS]),
             ),
         }
     )
@@ -203,9 +208,7 @@ def scenario_clean():
     builder.add_edge("synthesis", END)
     
     # 2. Wire Checkpointers
-    dhmc_instance = build_dhmc("loan-clean-001")
-    # Since Scenario 1 has 4 steps in M2, set min_steps=3
-    dhmc_instance.envelopes["M2"].min_steps = 3
+    dhmc_instance = build_dhmc("loan-clean-001", m2_min_steps=3)
     
     memory = InMemorySaver()
     wrapped_checkpointer = DHMCWrappedCheckpointer(
@@ -213,6 +216,8 @@ def scenario_clean():
         dhmc_instance=dhmc_instance,
         node_to_module=node_to_module,
         node_to_step_type=node_to_step_type,
+        branch_mapping={"fraud_check": "fraud_check"},
+        final_node_name="synthesis",
     )
     
     graph = builder.compile(checkpointer=wrapped_checkpointer)
@@ -263,8 +268,7 @@ def scenario_context_hijack():
     builder.add_edge("fraud_check", "synthesis")
     builder.add_edge("synthesis", END)
     
-    dhmc_instance = build_dhmc("loan-attack-hijack-001")
-    dhmc_instance.envelopes["M2"].min_steps = 3
+    dhmc_instance = build_dhmc("loan-attack-hijack-001", m2_min_steps=3)
     
     memory = InMemorySaver()
     wrapped_checkpointer = DHMCWrappedCheckpointer(
@@ -272,6 +276,8 @@ def scenario_context_hijack():
         dhmc_instance=dhmc_instance,
         node_to_module=node_to_module,
         node_to_step_type=node_to_step_type,
+        branch_mapping={"fraud_check": "fraud_check"},
+        final_node_name="synthesis",
     )
     
     graph = builder.compile(checkpointer=wrapped_checkpointer)
@@ -295,7 +301,8 @@ def scenario_context_hijack():
         print(f"[ATTACK] URI: {target_step.output_cas_uri}")
         
         # Modify the stored credit policy threshold from 650 -> 100
-        dhmc_instance.simulate_post_execution_tamper(
+        simulate_post_execution_tamper(
+            dhmc_instance,
             target_step.output_cas_uri,
             {
                 "credit_score": 720,
@@ -339,8 +346,7 @@ def scenario_unauthorized_step():
     builder.add_edge("database_write", "synthesis")
     builder.add_edge("synthesis", END)
     
-    dhmc_instance = build_dhmc("loan-attack-inject-001")
-    dhmc_instance.envelopes["M2"].min_steps = 3
+    dhmc_instance = build_dhmc("loan-attack-inject-001", m2_min_steps=3)
     
     memory = InMemorySaver()
     wrapped_checkpointer = DHMCWrappedCheckpointer(
@@ -348,6 +354,8 @@ def scenario_unauthorized_step():
         dhmc_instance=dhmc_instance,
         node_to_module=node_to_module,
         node_to_step_type=node_to_step_type,
+        branch_mapping={"fraud_check": "fraud_check"},
+        final_node_name="synthesis",
     )
     
     graph = builder.compile(checkpointer=wrapped_checkpointer)
@@ -386,11 +394,7 @@ def scenario_subagent():
     parent_builder.add_edge("bureau_lookup_agent", "synthesis")
     parent_builder.add_edge("synthesis", END)
     
-    parent_dhmc = build_dhmc("loan-subagent-001")
-    # In Scenario 4, M2 envelope needs to allow SUBAGENT step type
-    parent_dhmc.envelopes["M2"].allowed_types.add(StepType.SUBAGENT)
-    # Scenario 4 has 1 step in M2 (the bureau_lookup_agent), so we set min_steps=1
-    parent_dhmc.envelopes["M2"].min_steps = 1
+    parent_dhmc = build_dhmc("loan-subagent-001", m2_min_steps=1, m2_allowed_types={StepType.RAG, StepType.TOOL, StepType.VALIDATION, StepType.SUBAGENT})
     
     parent_memory = InMemorySaver()
     parent_wrapper = DHMCWrappedCheckpointer(
@@ -398,15 +402,19 @@ def scenario_subagent():
         dhmc_instance=parent_dhmc,
         node_to_module=node_to_module,
         node_to_step_type=node_to_step_type,
+        branch_mapping={"fraud_check": "fraud_check"},
+        final_node_name="synthesis",
     )
-    
-    # Expose wrapper globally so the parent node can access it
-    shared_parent_wrapper = parent_wrapper
     
     parent_graph = parent_builder.compile(checkpointer=parent_wrapper)
     
     # 2. Run Parent Graph
-    parent_config = {"configurable": {"thread_id": "parent-thread"}}
+    parent_config = {
+        "configurable": {
+            "thread_id": "parent-thread",
+            "dhmc_wrapper": parent_wrapper
+        }
+    }
     print("\n[Pregel] Starting real parent LangGraph loop...")
     parent_graph.invoke(
         {

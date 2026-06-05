@@ -43,6 +43,8 @@ class DHMCWrappedCheckpointer(BaseCheckpointSaver):
         dhmc_instance: DHMCCheckpointer,
         node_to_module: Dict[str, str],
         node_to_step_type: Dict[str, StepType],
+        branch_mapping: Optional[Dict[str, str]] = None,
+        final_node_name: Optional[str] = "synthesis",
     ) -> None:
         # Base class init
         super().__init__(serde=underlying.serde)
@@ -50,10 +52,13 @@ class DHMCWrappedCheckpointer(BaseCheckpointSaver):
         self.dhmc = dhmc_instance
         self.node_to_module = node_to_module
         self.node_to_step_type = node_to_step_type
+        self.branch_mapping = branch_mapping or {}
+        self.final_node_name = final_node_name
         
         # State tracking
         self.current_module: Optional[str] = None
         # Race-free thread synchronization buffers
+        self._lock = threading.Lock()
         self.write_events: Dict[tuple[str, Optional[str]], threading.Event] = {}
         self.buffered_writes: Dict[tuple[str, Optional[str]], tuple[str, Sequence[tuple[str, Any]]]] = {}
         # Transient in-memory list of spawned child checkpointers waiting to be collapsed
@@ -74,8 +79,8 @@ class DHMCWrappedCheckpointer(BaseCheckpointSaver):
                 self.dhmc.close_module(self.current_module)
             self.current_module = module_id
 
-            # Handle conditional branch id for fraud_check
-            branch_id = "fraud_check" if node_name == "fraud_check" else None
+            # Handle conditional branch id dynamically
+            branch_id = self.branch_mapping.get(node_name)
 
             # Serialize payloads to avoid Pydantic issues and ensure pure Python types
             serialized_writes = serialize_for_dhmc(writes)
@@ -101,7 +106,7 @@ class DHMCWrappedCheckpointer(BaseCheckpointSaver):
                 )
 
             # Synthesis is the final step; close M3 and reset active module tracking
-            if node_name == "synthesis":
+            if self.final_node_name and node_name == self.final_node_name:
                 self.dhmc.close_module(module_id)
                 self.current_module = None
 
@@ -117,21 +122,23 @@ class DHMCWrappedCheckpointer(BaseCheckpointSaver):
         thread_id = config["configurable"]["thread_id"]
         checkpoint_id = config["configurable"].get("checkpoint_id")
 
-        # Identify executing node name from task_path
+        # Identify executing node name from task_path using exact token matching
+        import re
         node_name = None
+        path_components = set(re.split(r'[^a-zA-Z0-9_]+', task_path))
         for name in self.node_to_module:
-            if name in task_path:
+            if name in path_components:
                 node_name = name
                 break
 
         print(f"  [DHMC-WRAPPER] Intercepted put_writes | task_path='{task_path}' | thread={thread_id} | checkpoint={checkpoint_id} -> node={node_name}")
         if node_name:
             key = (thread_id, checkpoint_id)
-            self.buffered_writes[key] = (node_name, writes)
-            
-            # Signal to the waiting put() thread that writes are ready
-            if key in self.write_events:
-                self.write_events[key].set()
+            with self._lock:
+                self.buffered_writes[key] = (node_name, writes)
+                # Signal to the waiting put() thread that writes are ready
+                if key in self.write_events:
+                    self.write_events[key].set()
 
     def _dhmc_put_intercept(
         self,
@@ -149,24 +156,28 @@ class DHMCWrappedCheckpointer(BaseCheckpointSaver):
         key = (thread_id, parent_checkpoint_id)
         
         # If writes have not been buffered yet, wait for them sequentially!
-        if key not in self.buffered_writes:
-            # We skip waiting if this is a genesis checkpoint with no node execution
-            # In LangGraph, the genesis checkpoint has metadata["source"] == "input"
-            # or parent_checkpoint_id is None, so we don't wait for it.
-            if parent_checkpoint_id is not None:
-                print(f"  [DHMC-WRAPPER] Sequential Sync: Waiting for put_writes of checkpoint={parent_checkpoint_id}...")
+        with self._lock:
+            needs_wait = key not in self.buffered_writes
+            if needs_wait and parent_checkpoint_id is not None:
                 event = self.write_events.setdefault(key, threading.Event())
-                # Wait up to 5 seconds for background thread to execute and buffer the writes
-                event.wait(timeout=5.0)
+        
+        if needs_wait and parent_checkpoint_id is not None:
+            print(f"  [DHMC-WRAPPER] Sequential Sync: Waiting for put_writes of checkpoint={parent_checkpoint_id}...")
+            # Wait up to 5 seconds for background thread to execute and buffer the writes
+            success = event.wait(timeout=5.0)
+            if not success:
+                raise RuntimeError(f"DHMC intercept timeout: failed to receive put_writes event within 5 seconds for checkpoint {parent_checkpoint_id}.")
 
         # Retrieve the buffered writes and register the step
-        if key in self.buffered_writes:
-            node_name, writes = self.buffered_writes.pop(key)
+        with self._lock:
+            has_writes = key in self.buffered_writes
+            if has_writes:
+                node_name, writes = self.buffered_writes.pop(key)
+            self.write_events.pop(key, None)
+
+        if has_writes:
             print(f"  [DHMC-WRAPPER] Found writes for node={node_name}. Registering step sequentially.")
             self._register_step_internal(node_name, writes, checkpoint.get("channel_values", {}))
-            
-        # Clean up events
-        self.write_events.pop(key, None)
 
     # --- Abstract & Overridden checkpointer methods ---
 

@@ -16,27 +16,20 @@ LangGraph Pregel superstep → DHMC micro-step mapping:
 """
 
 import hashlib
+import logging
 import json
 import time
 import uuid
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
+from .crypto import _blake3, _canonical_bytes
 from .mmr_engine import MerkleMountainRange
-from .nonce_gen import SimulatedTEEEnclave, RegistrationToken
-from .schema_envelope import SchemaEnvelope, DeviationCode, StepType
+from .nonce_gen import SoftwareSimulatedEnclave, RegistrationToken
+from .schema_envelope import SchemaEnvelope, DeviationCode, StepType, GenesisCommitment, compute_envelope_hash
 
-
-def _blake3(*parts: bytes) -> bytes:
-    h = hashlib.sha3_256()
-    for p in parts:
-        h.update(p)
-    return h.digest()
-
-
-def _canonical_bytes(obj: Any) -> bytes:
-    """Deterministic JSON serialization for payload hashing."""
-    return json.dumps(obj, sort_keys=True, default=str).encode()
+logger = logging.getLogger('dhmc')
 
 
 def _content_address(payload: Any) -> str:
@@ -119,14 +112,23 @@ class DHMCCheckpointer:
         self,
         session_id: str,
         envelopes: Dict[str, SchemaEnvelope],
+        max_cas_entries: int = 10000,
     ):
         self.session_id = session_id
         self.envelopes = envelopes
-        self.enclave = SimulatedTEEEnclave(session_id)
-        self.cas_store: Dict[str, Any] = {}          # content-address → payload
+        self.max_cas_entries = max_cas_entries
+        self.enclave = SoftwareSimulatedEnclave(session_id)
+        self.cas_store: OrderedDict[str, Any] = OrderedDict()  # LRU bounded content-address store
+        self.evicted_uris: set = set()  # Track CAS URIs evicted by LRU policy
         self.step_records: List[DHMCStepRecord] = []
+        self.step_by_id: Dict[str, DHMCStepRecord] = {}
+        self.step_by_nonce: Dict[bytes, DHMCStepRecord] = {}
+        self.steps_by_module: Dict[str, List[DHMCStepRecord]] = {mod_id: [] for mod_id in envelopes}
+        
         self.module_states: Dict[str, DHMCModuleState] = {}
         self.module_chain: List[bytes] = []           # ordered module hashes
+        self.module_close_order: list = list(envelopes.keys())
+        self._next_close_index: int = 0
         self._prev_module_hash = b'\x00' * 32         # Genesis anchor
 
         # Initialize module states
@@ -136,6 +138,15 @@ class DHMCCheckpointer:
                 envelope=envelope,
                 mmr=MerkleMountainRange(epoch_size=envelope.epoch_size),
             )
+
+        # Create Genesis Commitment to anchor the chain
+        envelope_hashes = {mod_id: compute_envelope_hash(env) for mod_id, env in envelopes.items()}
+        self.genesis_commitment = self.enclave.issue_genesis_commitment(
+            query_hash=b'\x00' * 32,
+            envelope_hashes=envelope_hashes
+        )
+        self._prev_module_hash = self.genesis_commitment.commitment_hash()
+        self.enclave.advance_module(self._prev_module_hash)
 
     # ── Core DHMC step registration ───────────────────────────────────────────
 
@@ -178,8 +189,13 @@ class DHMCCheckpointer:
         # ── Content-address payloads to CAS ──────────────────────────────────
         input_uri = _content_address(input_payload)
         output_uri = _content_address(output_payload)
-        self.cas_store[input_uri] = input_payload
-        self.cas_store[output_uri] = output_payload
+        
+        for uri, payload in [(input_uri, input_payload), (output_uri, output_payload)]:
+            self.cas_store[uri] = payload
+            self.cas_store.move_to_end(uri)
+            if len(self.cas_store) > self.max_cas_entries:
+                evicted_uri, _ = self.cas_store.popitem(last=False)
+                self.evicted_uris.add(evicted_uri)
 
         # ── PreHash: binds input + nonce + chain state ────────────────────────
         pre_hash = _blake3(
@@ -229,6 +245,9 @@ class DHMCCheckpointer:
         module.steps.append(record)
         module.observed_step_types.append(step_type)
         self.step_records.append(record)
+        self.step_by_id[record.step_id] = record
+        self.step_by_nonce[record.nonce] = record
+        self.steps_by_module[module_id].append(record)
 
         return record
 
@@ -242,6 +261,14 @@ class DHMCCheckpointer:
         H(M_t) = BLAKE3(H(M_{t-1}) || R_t || N_t)
         where N_t = step count, R_t = final MMR commitment.
         """
+        # ── Module closure ordering check (R9) ────────────────────────────────
+        expected_id = self.module_close_order[self._next_close_index] if self._next_close_index < len(self.module_close_order) else None
+        if expected_id and module_id != expected_id:
+            logger.warning(
+                f"Module {module_id} closed out of declared order "
+                f"(expected {expected_id}). Chain integrity may be affected."
+            )
+
         module = self.module_states[module_id]
         if module.is_closed:
             raise RuntimeError(f"Module {module_id} already closed")
@@ -252,7 +279,7 @@ class DHMCCheckpointer:
             observed_depth=module.max_observed_depth,
         )
         if violations:
-            print(f"[DHMC] ⚠ Module {module_id} envelope violations: {violations}")
+            logger.warning(f"Module {module_id} envelope violations: {violations}")
 
         # ── Merkle commitment R_t ─────────────────────────────────────────────
         R_t = module.mmr.final_commitment()
@@ -265,12 +292,20 @@ class DHMCCheckpointer:
         module.module_hash = H_t
         self.module_chain.append(H_t)
 
+        # Track closure ordering
+        if module_id in self.module_close_order:
+            idx = self.module_close_order.index(module_id)
+            if idx == self._next_close_index:
+                self._next_close_index += 1
+
         # Advance enclave chain state for next module's nonce derivation
         self._prev_module_hash = H_t
         self.enclave.advance_module(H_t)
 
-        print(f"[DHMC] ✓ Module {module_id} closed | steps={len(module.steps)} "
-              f"| H(M)={H_t.hex()[:16]}...")
+        logger.info(
+            f"Module {module_id} closed | steps={len(module.steps)} "
+            f"| H(M)={H_t.hex()[:16]}..."
+        )
         return H_t
 
     # ── Sub-agent support ─────────────────────────────────────────────────────
@@ -286,19 +321,28 @@ class DHMCCheckpointer:
             self._prev_module_hash
         )
         sub_session_id = f"{self.session_id}::sub::{parent_step_id[:16]}"
-        # Sub-agent inherits parent envelopes structure; real use would have its own
         child = DHMCCheckpointer.__new__(DHMCCheckpointer)
         child.session_id = sub_session_id
         child.envelopes = {}
-        child.enclave = SimulatedTEEEnclave(sub_session_id)
-        child.cas_store = {}
+        child.max_cas_entries = self.max_cas_entries
+        child.enclave = SoftwareSimulatedEnclave(sub_session_id)
+        child.cas_store = OrderedDict()
         child.step_records = []
+        child.step_by_id = {}
+        child.step_by_nonce = {}
+        child.steps_by_module = {}
         child.module_states = {}
         child.module_chain = []
+        child.module_close_order = []
+        child._next_close_index = 0
+        child.evicted_uris = set()
         # Bind child genesis to parent chain state
         child._prev_module_hash = _blake3(self._prev_module_hash, spawn_nonce)
-        print(f"[DHMC] Sub-agent spawned | parent_step={parent_step_id[:20]} "
-              f"| genesis_binding={child._prev_module_hash.hex()[:16]}...")
+        child.genesis_commitment = None  # Sub-agent has no independent genesis
+        logger.info(
+            f"Sub-agent spawned | parent_step={parent_step_id[:20]} "
+            f"| genesis_binding={child._prev_module_hash.hex()[:16]}..."
+        )
         return child
 
     def collapse_subagent(self, parent_module_id: str, step_type: StepType,
@@ -324,6 +368,12 @@ class DHMCCheckpointer:
         """Export full provenance chain for auditor."""
         return {
             "session_id": self.session_id,
+            "genesis_commitment": {
+                "query_hash": self.genesis_commitment.query_hash.hex(),
+                "envelope_hashes": {k: v.hex() for k, v in self.genesis_commitment.envelope_hashes.items()},
+                "commitment_hash": self.genesis_commitment.commitment_hash().hex(),
+                "enclave_sig": self.genesis_commitment.enclave_sig.hex(),
+            } if self.genesis_commitment is not None else None,
             "module_count": len(self.module_chain),
             "final_hash": self._prev_module_hash.hex(),
             "modules": {
@@ -341,16 +391,9 @@ class DHMCCheckpointer:
 
     def get_payload(self, cas_uri: str) -> Optional[Any]:
         """Retrieve content-addressed payload for forensic reconstruction."""
-        return self.cas_store.get(cas_uri)
-
-    def simulate_post_execution_tamper(self, target_uri: str, tampered_payload: Any):
-        """
-        ATTACK SIMULATION ONLY.
-        Simulates an adversary with CAS write access modifying a stored payload
-        after execution. This is the exact threat DHMC's cascade-invalidation detects:
-        the URI (and therefore the binding) was computed from the original payload;
-        swapping the payload breaks the hash chain.
-        """
-        if target_uri in self.cas_store:
-            self.cas_store[target_uri] = tampered_payload
-            print(f"  [ATTACK-SIM] CAS entry tampered: {target_uri[:60]}...")
+        result = self.cas_store.get(cas_uri)
+        if result is not None:
+            return result
+        if cas_uri in self.evicted_uris:
+            return "__CAS_EVICTED__"  # sentinel
+        return None

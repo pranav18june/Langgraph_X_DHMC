@@ -1,0 +1,298 @@
+/* ============================================================
+   Simulator Page Styles
+   ============================================================ */
+
+.simulator__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.simulator__header-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.spin-icon {
+  animation: spin 1.5s linear infinite;
+}
+
+/* Scenarios */
+.simulator__scenarios {
+  margin-bottom: var(--space-xl);
+}
+
+.simulator__section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-md);
+}
+
+.simulator__scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+
+/* Main Layout */
+.simulator__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.simulator__pipeline-section,
+.simulator__log-section {
+  width: 100%;
+}
+
+.simulator__verdict {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .simulator__scenario-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .simulator__header {
+    flex-direction: column;
+  }
+
+  .simulator__scenario-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Workspace Layout Split */
+.simulator__workspace {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .simulator__workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Connection Status Badge */
+.simulator__connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(var(--glass-blur));
+  margin-right: 12px;
+}
+
+.simulator__connection-status--online {
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--green-400);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.simulator__connection-status--offline {
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--amber-400);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.simulator__connection-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.simulator__connection-status--online .simulator__connection-dot {
+  background-color: var(--green-500);
+  box-shadow: 0 0 8px var(--green-500);
+  animation: pulse 2s infinite;
+}
+
+.simulator__connection-status--offline .simulator__connection-dot {
+  background-color: var(--amber-500);
+  box-shadow: 0 0 8px var(--amber-500);
+  animation: pulse 2s infinite;
+}
+
+/* History Sidebar Panel */
+.simulator__history-sidebar {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  backdrop-filter: blur(var(--glass-blur));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  box-shadow: var(--shadow-md);
+}
+
+.simulator__history-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: var(--space-sm);
+}
+
+.simulator__history-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.simulator__history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.simulator__history-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.simulator__history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  color: var(--text-tertiary);
+  gap: var(--space-sm);
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-md);
+}
+
+.simulator__history-empty-icon {
+  opacity: 0.4;
+  color: var(--text-tertiary);
+}
+
+.simulator__history-empty p {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* History Card */
+.simulator__history-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px var(--space-md);
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-align: left;
+}
+
+.simulator__history-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.simulator__history-card--active {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: var(--blue-500);
+  box-shadow: 0 0 12px var(--blue-glow);
+}
+
+.simulator__history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.simulator__history-card-applicant {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.simulator__history-card-scenario {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.simulator__history-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.simulator__history-card-amount {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.simulator__history-card-delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simulator__history-card:hover .simulator__history-card-delete {
+  opacity: 0.7;
+}
+
+.simulator__history-card-delete:hover {
+  opacity: 1 !important;
+  color: var(--red-400);
+  background: rgba(239, 68, 68, 0.1);
+}
+

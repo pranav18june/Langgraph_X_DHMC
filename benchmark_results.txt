@@ -1,10 +1,17 @@
-Elements: 1000   | Mean: 0.0019ms | Stdev: 0.0013ms
-Elements: 1000   | Mean: 0.0018ms | Stdev: 0.0012ms
-Elements: 1000   | Mean: 0.0021ms | Stdev: 0.0014ms
-Elements: 1000   | Mean: 0.0021ms | Stdev: 0.0014ms
-Elements: 1000   | Mean: 0.0020ms | Stdev: 0.0014ms
-Elements: 1000   | Mean: 0.0021ms | Stdev: 0.0014ms
-Elements: 2000   | Mean: 0.0035ms | Stdev: 0.0022ms
-Elements: 2000   | Mean: 0.0035ms | Stdev: 0.0022ms
-Elements: 2000   | Mean: 0.0040ms | Stdev: 0.0026ms
-Elements: 2000   | Mean: 0.0049ms | Stdev: 0.0067ms
+=== CORRECTED BENCHMARK RESULTS ===
+Elements: 1000   | Mean: 1.79μs (0.0018ms) | Stdev: 1.26μs (0.0013ms) | Throughput: 557,434 ops/sec
+Elements: 2000   | Mean: 1.78μs (0.0018ms) | Stdev: 1.22μs (0.0012ms) | Throughput: 562,458 ops/sec
+Elements: 1000   | Mean: 1.85μs (0.0019ms) | Stdev: 1.48μs (0.0015ms) | Throughput: 539,723 ops/sec
+Elements: 2000   | Mean: 1.83μs (0.0018ms) | Stdev: 1.20μs (0.0012ms) | Throughput: 545,593 ops/sec
+Elements: 1000   | Mean: 1.98μs (0.0020ms) | Stdev: 1.87μs (0.0019ms) | Throughput: 505,468 ops/sec
+Elements: 2000   | Mean: 1.92μs (0.0019ms) | Stdev: 1.70μs (0.0017ms) | Throughput: 519,502 ops/sec
+Elements: 1000   | Mean: 1.76μs (0.0018ms) | Stdev: 1.25μs (0.0012ms) | Throughput: 568,886 ops/sec
+Elements: 2000   | Mean: 1.80μs (0.0018ms) | Stdev: 1.10μs (0.0011ms) | Throughput: 555,899 ops/sec
+Elements: 1000   | Mean: 2.40μs (0.0024ms) | Stdev: 1.67μs (0.0017ms) | Throughput: 416,441 ops/sec
+Elements: 2000   | Mean: 2.23μs (0.0022ms) | Stdev: 1.39μs (0.0014ms) | Throughput: 449,394 ops/sec
+Elements: 1000   | Mean: 2.10μs (0.0021ms) | Stdev: 1.42μs (0.0014ms) | Throughput: 477,121 ops/sec
+Elements: 2000   | Mean: 2.02μs (0.0020ms) | Stdev: 1.46μs (0.0015ms) | Throughput: 496,003 ops/sec
+Elements: 1000   | Mean: 2.35μs | Stdev: 4.38μs | p50: 1.83μs | p95: 5.46μs | p99: 8.29μs | Throughput: 426,176 ops/sec
+Elements: 2000   | Mean: 2.17μs | Stdev: 1.64μs | p50: 1.79μs | p95: 4.96μs | p99: 7.33μs | Throughput: 460,485 ops/sec
+Elements: 1000   | Mean: 2.22μs | Stdev: 1.46μs | p50: 1.92μs | p95: 5.38μs | p99: 7.83μs | Throughput: 450,535 ops/sec
+Elements: 2000   | Mean: 2.45μs | Stdev: 2.53μs | p50: 1.83μs | p95: 5.88μs | p99: 10.58μs | Throughput: 408,880 ops/sec

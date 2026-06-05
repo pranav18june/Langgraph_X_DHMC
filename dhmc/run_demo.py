@@ -12,12 +12,13 @@ Also demonstrates the forensic drill-down capability.
 
 import sys
 import os
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from dhmc.langgraph_checkpointer import DHMCCheckpointer
 from dhmc.schema_envelope import SchemaEnvelope, StepType
 from dhmc.auditor import DHMCAuditor
-from pipeline.loan_approval import run_loan_approval_pipeline
+from dhmc.loan_approval import run_loan_approval_pipeline
+from tests.testing_utils import simulate_post_execution_tamper
 
 
 def build_dhmc(session_id: str) -> DHMCCheckpointer:
@@ -95,7 +96,8 @@ def scenario_context_hijack():
         print(f"\n[ATTACK] Attacker targets M2 step 0 output CAS entry")
         print(f"[ATTACK] URI: {target_step.output_cas_uri}")
         # Attacker modifies the stored credit policy threshold from 650 → 100
-        dhmc.simulate_post_execution_tamper(
+        simulate_post_execution_tamper(
+            dhmc,
             target_step.output_cas_uri,
             {   # Modified payload — would have approved a low-score applicant
                 "credit_score": 720,
@@ -137,7 +139,8 @@ def scenario_unauthorized_step():
     if m1_steps:
         target_step = m1_steps[0]
         print(f"\n[ATTACK] Attacker targets M1 output — inflating loan amount in records")
-        dhmc.simulate_post_execution_tamper(
+        simulate_post_execution_tamper(
+            dhmc,
             target_step.output_cas_uri,
             {   # Modified: attacker changes the recorded requested amount
                 "applicant_name": "Normal Applicant",
